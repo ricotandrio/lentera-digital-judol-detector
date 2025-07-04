@@ -99,28 +99,30 @@ async function main() {
     const url = new URL(window.location.href);
     const domain = url.hostname;
 
+    const domain_protocol = url.protocol;
+
     const classificationResult = await fetch(inference_url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ 
-        url: domain,
+        url: `${domain_protocol}//${domain}`,
       })
     });
 
-    // if (!classificationResult.ok) {
-    //   throw new Error(`HTTP error! status: ${classificationResult.status}`);
-    // }
+    if (!classificationResult.ok) {
+      throw new Error(`HTTP error! status: ${classificationResult.status}`);
+    }
 
-    // const result = await classificationResult.json();
-    // console.log("Classification Result:", result);
+    const result = await classificationResult.json();
+    console.log("Classification Result:", result);
 
-    // if (result) {
-    //   generatePopupContentWarning(result.label);
-    // } else {
-    //   console.warn("No classification result available.");
-    // }
+    if (result.data.classification === "judol") {
+      generatePopupContentWarning(result.label);
+    } else {
+      console.log("Not detected as judol.");
+    }
   } catch (error) {
     console.error("Error during inference:", error);
   }
