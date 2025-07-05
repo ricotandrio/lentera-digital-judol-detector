@@ -31,6 +31,16 @@ def create_app():
 
     try:
       output_class = perform_inference(url)
+    
+    except ValueError as ve:
+      return jsonify({
+        "status": 400,
+        "success": False,
+        "message": str(ve),
+        "error": {"code": "INVALID_URL", "detail": str(ve)},
+        "url": url
+      }), 400
+      
     except Exception as e:
       return jsonify({
         "status": 500,
