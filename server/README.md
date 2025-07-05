@@ -6,16 +6,16 @@ This is the server component of the Lentera Digital Judol Detector project. It i
 
 1. Make virtual environment
    ```bash
-   python -m venv venv
+   python -m venv .venv
    ```
 2. Activate the virtual environment
    - On Windows:
      ```bash
-     venv\Scripts\activate
+     .venv\Scripts\activate
      ```
    - On macOS/Linux:
      ```bash
-     source venv/bin/activate
+     source .venv/bin/activate
      ```
 3. Install the required packages
    ```bash
