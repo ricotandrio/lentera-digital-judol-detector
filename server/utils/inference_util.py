@@ -10,7 +10,7 @@ import re
 
 def get_inference_pipeline():
   try:
-    return pipeline("text-classification", model="google/gemma-3n-E2B-it")
+    return pipeline("text-generation", model="google/gemma-3n-E2B-it")
   except Exception as e:
     print(f"Error loading inference pipeline: {e}")
     raise Exception("Failed to load inference pipeline. Ensure the model is available and the transformers library is correctly installed.")
@@ -18,39 +18,36 @@ def get_inference_pipeline():
 def inference(text_ocr: str, cleaned_html_content: str) -> str:
   inference_pipeline = get_inference_pipeline()
   
+  prompt = """
+    You are a helpful AI assistant that classifies website into one of the following categories:
+    - "Judol" for content related to gambling, betting, or any form of illegal online gambling.
+    - "Non-Judol" for content that does not relate to gambling or illegal activities
+    
+    Your task is to analyze the provided website content and return the most appropriate classification.
+    Please classify the following content that is extracted from all image and HTML content of a website:
+    - Here is the text of image that fetched via OCR:
+    {text_ocr}
+    
+    - Here is the cleaned HTML content:
+    {cleaned_html_content}
+    
+    Based on the above content, classify it as either "Judol" or "Non-Judol".
+    Provide only the classification label as your response.
+  """.format(text_ocr=text_ocr, cleaned_html_content=cleaned_html_content)
+  
   try:
-    result = inference_pipeline(text=[
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text", 
-            "text": """
-              You are a helpful AI assistant that classifies text into one of the following categories:
-              - "Judol" for content related to gambling, betting, or any form of illegal online gambling.
-              - "Non-Judol" for content that does not relate to gambling or illegal activities
-              
-              Your task is to analyze the provided text and return the most appropriate classification.
-              Please classify the following text that is extracted from all image and HTML content of a website:
-              - Here is the output from OCR:
-              {text_ocr}
-              
-              - Here is the cleaned HTML content:
-              {cleaned_html_content}
-              
-              Based on the above content, classify it as either "Judol" or "Non-Judol".
-              Provide only the classification label as your response.
-            """.format(text_ocr=text_ocr, cleaned_html_content=cleaned_html_content)
-          }
-        ]
-      }
-    ])
+    result = inference_pipeline(prompt, max_new_tokens=5)
+    output = result[0]["generated_text"].strip().split()[-1]
     
-    if result and isinstance(result, list) and len(result) > 0:
-      return result[0]['label']
+    # print(f"[OUTPUT] {output}")
+
+    if output == "Judol":
+      return "Judol"
+    elif output == "Non-Judol":
+      return "Non-Judol"
     else:
-      raise Exception("Inference result is empty or not in expected format.")
-    
+      raise Exception(f"Unexpected output: {output}")
+      
   except Exception as e:
     print(f"Error during classification: {e}")
     raise Exception("Inference failed, please check the input data or model configuration.")
@@ -69,14 +66,14 @@ def get_screenshot_and_ocr(url: str):
 
   text_ocr = pytesseract.image_to_string(Image.open(path))
   
-  print("\n[DEBUG] Screenshot saved to:", path)
-  print("[OCR TEXT START]")
-  print(text_ocr.strip())
-  print("[OCR TEXT END]")
+  # print("\n[DEBUG] Screenshot saved to:", path)
+  # print("[OCR TEXT START]")
+  # print(text_ocr.strip())
+  # print("[OCR TEXT END]")
 
-  print("\n[HTML CONTENT START]")
-  print(html_content.strip()[:100]) 
-  print("[HTML CONTENT END]\n")
+  # print("\n[HTML CONTENT START]")
+  # print(html_content.strip()[:100]) 
+  # print("[HTML CONTENT END]\n")
 
   os.remove(path)
   
@@ -127,9 +124,6 @@ def perform_inference(url: str) -> bool:
       print("Content is not Judol, no action taken.")
       return False
     
-  except BlacklistsModel.BlacklistError as e:
-    print(f"Blacklist error: {e}")
-    return None
   except Exception as e:
     print(f"Error adding to blacklist: {e}")
     return None
