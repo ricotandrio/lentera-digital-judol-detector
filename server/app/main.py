@@ -20,6 +20,7 @@ def create_app():
   def inference():
     data = request.get_json(silent=True)
     url = data.get("url") if data else None
+    html_content = data.get("html_content") if data else None
 
     if not url:
       return jsonify({
@@ -28,9 +29,17 @@ def create_app():
         "message": "URL is required.",
         "error": {"code": "MISSING_URL", "field": "url"}
       }), 400
+      
+    if not html_content:
+      return jsonify({
+        "status": 400,
+        "success": False,
+        "message": "HTML content is required.",
+        "error": {"code": "MISSING_HTML_CONTENT", "field": "html_content"}
+      }), 400
 
     try:
-      output_class = perform_inference(url)
+      output_class = perform_inference(url=url, cleaned_html_content=html_content)
     
     except ValueError as ve:
       return jsonify({
