@@ -6,6 +6,7 @@ import time
 import requests
 import json
 import dotenv
+import os
 
 def get_inference_pipeline():
   try:
@@ -32,7 +33,7 @@ def inference(cleaned_html_content: str) -> str:
   """.format(cleaned_html_content=cleaned_html_content.replace("\n", " ").replace("  ", ""))
   
   try:
-    API_KEY = dotenv.get("API_KEY")
+    API_KEY = os.getenv("API_KEY")
     
     if not API_KEY:
       raise Exception("API_KEY not found in environment variables. Please set the API_KEY in your .env file.")
@@ -91,6 +92,11 @@ def perform_inference(url, cleaned_html_content: str) -> bool:
   if not cleaned_html_content:
     print("No HTML content provided for inference.")
     return False
+  
+  is_blacklisted = BlacklistsModel.is_blacklisted(url)
+  if is_blacklisted:
+    print(f"URL {url} is already blacklisted, skipping inference.")
+    return True
   
   try:
     output_class = inference(cleaned_html_content)

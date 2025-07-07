@@ -137,8 +137,9 @@ async function main() {
     const result = await classificationResult.json();
     console.log("Classification Result:", result);
 
-    if (result.data.classification === "judol") {
-      generatePopupContentWarning(result.label);
+    if (result.data.classification == "judol") {
+      console.log("Detected as judol.");
+      generatePopupContentWarning(result.data.classification);
     } else {
       console.log("Not detected as judol.");
     }
