@@ -93,13 +93,31 @@ function generatePopupContentWarning(classificationResult) {
   document.body.appendChild(overlay);
 }
 
+function getCleanTextFromHTML(htmlString) {
+  htmlString = htmlString.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
+  htmlString = htmlString.replace(/<style[^>]*>([\S\s]*?)<\/style>/gmi, '');
+  htmlString = htmlString.replace(/<[^>]+>/g, ' ');
+  htmlString = htmlString.replace(/&nbsp;/g, ' ');
+  htmlString = htmlString.replace(/&amp;/g, '&');
+  htmlString = htmlString.replace(/&lt;/g, '<'); 
+
+  htmlString = htmlString.replace(/\s+/g, ' ').trim();
+  return htmlString;
+}
+
 async function main() {
 
   try {
     const url = new URL(window.location.href);
-    const domain = url.hostname;
+    const html_content = document.body.innerHTML;
 
+    
+    const domain = url.hostname;
+    
     const domain_protocol = url.protocol;
+
+    console.log("Current URL:", domain_protocol + "//" + domain);
+    console.log(getCleanTextFromHTML(html_content));
 
     const classificationResult = await fetch(inference_url, {
       method: 'POST',
@@ -108,6 +126,7 @@ async function main() {
       },
       body: JSON.stringify({ 
         url: `${domain_protocol}//${domain}`,
+        html_content: getCleanTextFromHTML(html_content)
       })
     });
 
@@ -118,8 +137,9 @@ async function main() {
     const result = await classificationResult.json();
     console.log("Classification Result:", result);
 
-    if (result.data.classification === "judol") {
-      generatePopupContentWarning(result.label);
+    if (result.data.classification == "judol") {
+      console.log("Detected as judol.");
+      generatePopupContentWarning(result.data.classification);
     } else {
       console.log("Not detected as judol.");
     }

@@ -22,3 +22,10 @@ class BlacklistsModel(db.Model):
     db.session.commit()
     
     return blacklist_entry
+  
+  @staticmethod
+  def is_blacklisted(url):
+    if not url:
+      raise ValueError("URL cannot be empty.")
+    
+    return BlacklistsModel.query.filter_by(url=url).first() is not None
